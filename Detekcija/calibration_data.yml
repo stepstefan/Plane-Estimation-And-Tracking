@@ -1,0 +1,15 @@
+%YAML:1.0
+cameraMatrix: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [ 5.36953e+02, 0., 2.96274e+02, 0.,
+       5.37678e+02, 2.39549e+02, 0., 0., 1. ]
+distortionCoeff: !!opencv-matrix
+   rows: 5
+   cols: 1
+   dt: d
+   data: [ -7.39386e-02, 4.0048e-02,
+       -6.32969e-03, -7.95619e-03,
+       7.86382e-02 ]
+calibError: 6.1294530697621252e-01
