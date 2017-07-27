@@ -12,6 +12,8 @@
 #include <fstream>
 #include <math.h>
 #include <algorithm>
+#include <random>
+#include <time.h>
 
 using namespace std;
 using namespace cv;
@@ -31,6 +33,8 @@ using namespace cv;
  //* \param inlierDistance      Points with a high distance to the epipolar lines are
  //*                not displayed. If it is negative, all points are displayed
 
+
+//Draw Epipolar Lines_______________________________________________________________________________________________________________________________________________________________________________
 float distancePointLine(const Point2f point, const Vec<float,3>& line)
 {
   //Line is given as a*x + b*y + c = 0
@@ -105,6 +109,92 @@ void drawEpipolarLines(cv::Mat& F,
   cv::waitKey(1);
 }
 
+//RANSAC___________________________________________________________________________________________________________________________________________________________________________________________________
+float distancePointPlane(const Point3f& point, const vector<float>& plane)
+{
+      return fabsf(plane[0]*point.x + plane[1]*point.y + plane[2]*point.z + plane[3])
+      / sqrt(plane[0]*plane[0] + plane[1]*plane[1] + plane[2] * plane[2]) ;
+}
+
+vector<float> getPlaneParams(vector<Point3f>& samplePoints)
+{
+    vector<float> plane;
+    float a = ((samplePoints[0].y - samplePoints[1].y)*(samplePoints[1].z - samplePoints[2].z) - (samplePoints[1].y - samplePoints[2].y)*(samplePoints[0].z - samplePoints[1].z))
+                 / ((samplePoints[0].x - samplePoints[1].x)*(samplePoints[1].z - samplePoints[2].z) - (samplePoints[1].x - samplePoints[2].x)*(samplePoints[0].z - samplePoints[1].z));
+    plane.push_back(a);
+    plane.push_back(-1);
+    float c = a*(samplePoints[1].x - samplePoints[0].x) / (samplePoints[0].z - samplePoints[1].z);
+    plane.push_back(c);
+    plane.push_back(samplePoints[0].y - a*samplePoints[0].x - c*samplePoints[0].z);
+    return plane;
+}
+
+  
+
+float calculateError(vector<Point3f>& inliners, vector<float>& model)
+{
+    float tmp;
+    for(size_t i = 0; i <inliners.size(); i++)
+    {
+        float tmp2 = distancePointPlane(inliners[i], model);
+        tmp += tmp2 * tmp2;
+    }
+    tmp = sqrt(tmp);
+    return tmp;
+}
+
+vector<Point3f> fisherYatesShuffle(vector<Point3f> data)
+{
+    vector<Point3f> tmp = data;
+    for(int i=0; i < 3; i++)
+    {
+        int j = rand() % (tmp.size() - i);
+        swap(tmp[tmp.size() - 1 - i], data[j]);
+    }
+    vector<Point3f> result;
+    result.push_back(tmp[tmp.size() - 1]);
+    result.push_back(tmp[tmp.size() - 2]);
+    result.push_back(tmp[tmp.size() - 3]);
+    return result;
+}
+
+vector<float> ransac(vector<Point3f>& data, int& k, int t, int d)
+{  
+    vector<float> bestfit;
+    float besterror = 1000000;
+    while(bestfit.size() == 0)
+    {
+        for(int iterations = 0; iterations < k; iterations++)
+        {
+            vector<Point3f> maybeinliners = fisherYatesShuffle(data);
+            vector<float> maybemodel = getPlaneParams(maybeinliners);
+            //FileStorage fr("Rezultat", FileStorage::APPEND);
+            //fr << "radnom" << maybemodel;
+            vector<Point3f> alsoinliners;
+            for(size_t i = 0; i < data.size() ; i++)
+            {
+                printf("%f", distancePointPlane(data[i], maybemodel));
+                if(distancePointPlane(data[i], maybemodel) < t)
+                {
+                    alsoinliners.push_back(data[i]);
+                }
+            }
+            printf("%d", alsoinliners.size());
+            if(alsoinliners.size() > d)
+            {
+                printf("Pop sere");
+                float thiserror = calculateError(alsoinliners, maybemodel);
+                if(thiserror < besterror)
+                {
+                    bestfit = maybemodel;
+                    besterror = thiserror;
+                }
+            }
+        }
+    }
+    return bestfit;
+}
+
 
 
 //Multiplying of point and matrix______________________________________________________________________________________________________________________________________________________________________
@@ -119,6 +209,21 @@ cv::Point2f operator*(cv::Mat M, const cv::Point2f& p)
 
     cv::Mat_<double> dst = M*src; //USE MATRIX ALGEBRA
     return cv::Point2f(dst(0,0),dst(1,0));
+}
+
+//Convert From Homogenous_________________________________________________________________________________________________________________________________________________________________________________
+vector<Point3f> convertFromHomogenous(Mat points4d)
+{
+    vector<Point3f> points3d;
+    Point3f tmp;
+    for(size_t i = 0; i < points4d.cols; i++)
+    {
+        tmp.x = points4d.at<float>(0,i) / points4d.at<float>(3,i);
+        tmp.y = points4d.at<float>(1,i) / points4d.at<float>(3,i);
+        tmp.z = points4d.at<float>(2,i) / points4d.at<float>(3,i);
+        points3d.push_back(tmp);
+    }
+    return points3d;
 }
 
 //Main____________________________________________________________________________________________________________________________________________________________________________________________
@@ -224,13 +329,9 @@ int main(int argc, char** argv)
         }
     }
 
-    float a = -1;
 
-    drawEpipolarLines(fundamentalMatrix, img1, img2, correctMatchingPoints1, correctMatchingPoints2, a);
+    drawEpipolarLines(fundamentalMatrix, img1, img2, correctMatchingPoints1, correctMatchingPoints2, -1);
 
-    /*std::vector<cv::Vec<float,3> > epilines1, epilines2;
-    cv::computeCorrespondEpilines(correctMatchingPoints1, 1, fundamentalMatrix, epilines1); //Index starts with 1
-    cv::computeCorrespondEpilines(correctMatchingPoints1, 2, fundamentalMatrix, epilines2);*/
 
 
 
@@ -294,9 +395,7 @@ int main(int argc, char** argv)
 
     triangulatePoints(P1, P2, matchingPoints1, matchingPoints2, points4d);
 
-    vector<Point3f> points;
-
-    //convertPointsFromHomogeneous(points4d, points);
+    vector<Point3f> points3d = convertFromHomogenous(points4d);
 
 
 

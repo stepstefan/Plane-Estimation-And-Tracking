@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 2.8)
+project( Detekcija )
+find_package( OpenCV REQUIRED )
+add_executable( RANSAC RANSAC.cpp )
+target_link_libraries(RANSAC ${OpenCV_LIBS} )
