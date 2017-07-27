@@ -173,16 +173,16 @@ vector<float> ransac(vector<Point3f>& data, int& k, int t, int d)
             vector<Point3f> alsoinliners;
             for(size_t i = 0; i < data.size() ; i++)
             {
-                printf("%f", distancePointPlane(data[i], maybemodel));
+                //printf("%f", distancePointPlane(data[i], maybemodel));
                 if(distancePointPlane(data[i], maybemodel) < t)
                 {
                     alsoinliners.push_back(data[i]);
                 }
             }
-            printf("%d", alsoinliners.size());
+            //printf("%d", alsoinliners.size());
             if(alsoinliners.size() > d)
             {
-                printf("Pop sere");
+                //printf("Pop sere");
                 float thiserror = calculateError(alsoinliners, maybemodel);
                 if(thiserror < besterror)
                 {
@@ -254,7 +254,7 @@ int main(int argc, char** argv)
 
     // detecting keypoints
 
-    Ptr<FeatureDetector> detector(new DynamicAdaptedFeatureDetector(new FastAdjuster(20,true), 0, 100, 1000));
+    Ptr<FeatureDetector> detector(new DynamicAdaptedFeatureDetector(new FastAdjuster(20,true), 0, 1000, 1000));
     //Ptr<FeatureDetector> detector = FeatureDetector::create("ORB");
     vector<KeyPoint> keypoints1;
     detector->detect(img1, keypoints1);
@@ -337,10 +337,10 @@ int main(int argc, char** argv)
 
     error = error / correctMatchingPoints1.size();
 
-    printf("%f",error);
+    printf("%f \n",error);
 
 
-    printf("%d", correctMatchingPoints1.size());
+    printf("%d \n", correctMatchingPoints1.size());
 
     vector<KeyPoint> keypointsc1;
     vector<KeyPoint> keypointsc2;
@@ -358,6 +358,7 @@ int main(int argc, char** argv)
             correctMatches.push_back(matches[i]);
         }
     }
+
 
     Mat essentialMatrix = cameraMatrix.t() * fundamentalMatrix * cameraMatrix;
 
@@ -389,7 +390,7 @@ int main(int argc, char** argv)
 
 
     stereoRectify(cameraMatrix, distortionCoeff, cameraMatrix , distortionCoeff, Size(9,6), rotationMatrix1, translationMatrix1, R1, R2, P1, P2, Q);
-    printf("Pop sere");
+    //printf("Pop sere");
 
     Mat points4d(4,matches.size(),CV_64FC1);
 
@@ -397,7 +398,14 @@ int main(int argc, char** argv)
 
     vector<Point3f> points3d = convertFromHomogenous(points4d);
 
+    int k = (int)(log(1 - 0.99) / (log(1 - 0.65))) + 1;
 
+    vector<float> plane = ransac(points3d, k, 1, 80);
+
+
+    FileStorage store("Results", FileStorage::WRITE);
+    store << "Plane" << plane;
+    store << "Points" << points3d;
 
 
 
