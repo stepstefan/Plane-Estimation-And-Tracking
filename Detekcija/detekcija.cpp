@@ -129,7 +129,7 @@ vector<float> getPlaneParams(vector<Point3f>& samplePoints)
     return plane;
 }
 
-  
+
 
 float calculateError(vector<Point3f>& inliners, vector<float>& model)
 {
@@ -159,7 +159,7 @@ vector<Point3f> fisherYatesShuffle(vector<Point3f> data)
 }
 
 vector<float> ransac(vector<Point3f>& data, int& k, int t, int d)
-{  
+{
     vector<float> bestfit;
     float besterror = 1000000;
     while(bestfit.size() == 0)
@@ -233,8 +233,8 @@ int main(int argc, char** argv)
 
 
 //Initialization________________________________________________________________________________________________________________________________________________________________________________
-    Mat loadimg1 = imread("Images/sveska1.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-    Mat loadimg2 = imread("Images/sveska2.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+    Mat loadimg1 = imread("Images/2img1.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+    Mat loadimg2 = imread("Images/2img2.jpg", CV_LOAD_IMAGE_GRAYSCALE);
     Mat img1, img2;
 
     FileStorage fr("calibration_data.yml", FileStorage::READ);
@@ -398,9 +398,9 @@ int main(int argc, char** argv)
 
     vector<Point3f> points3d = convertFromHomogenous(points4d);
 
-    int k = (int)(log(1 - 0.99) / (log(1 - 0.65))) + 1;
+    int k = (int)(log(1 - 0.99) / (log(1 - 0.4))) + 1;
 
-    vector<float> plane = ransac(points3d, k, 1, 80);
+    vector<float> plane = ransac(points3d, k, 1, 20);
 
 
     FileStorage store("Results.txt", FileStorage::WRITE);
