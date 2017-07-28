@@ -398,9 +398,10 @@ int main(int argc, char** argv)
 
     vector<Point3f> points3d = convertFromHomogenous(points4d);
 
-    int k = (int)(log(1 - 0.99) / (log(1 - 0.4))) + 1;
+    int datasetSize = correctMatchingPoints1.size();
+    int k = (int)(log(1 - 0.99) / (log(1 - 0.64))) + 1;
 
-    vector<float> plane = ransac(points3d, k, 1, 20);
+    vector<float> plane = ransac(points3d, k, 1, datasetSize/2);
 
 
     FileStorage store("Results.txt", FileStorage::WRITE);
