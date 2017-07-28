@@ -233,8 +233,8 @@ int main(int argc, char** argv)
 
 
 //Initialization________________________________________________________________________________________________________________________________________________________________________________
-    Mat loadimg1 = imread("Images/sveska1.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-    Mat loadimg2 = imread("Images/sveska2.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+    Mat loadimg1 = imread("Images/2img1.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+    Mat loadimg2 = imread("Images/2img2.jpg", CV_LOAD_IMAGE_GRAYSCALE);
     Mat img1, img2;
 
     FileStorage fr("calibration_data.yml", FileStorage::READ);
@@ -404,7 +404,7 @@ int main(int argc, char** argv)
 
 
     FileStorage store("Results.txt", FileStorage::WRITE);
-    store << "Plane" << plane;
+    //store << "Plane" << plane;
     store << "Points" << points3d;
 
 
