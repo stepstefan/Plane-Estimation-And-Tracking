@@ -394,7 +394,7 @@ int main(int argc, char** argv)
 
     Mat points4d(4,matches.size(),CV_64FC1);
 
-    triangulatePoints(P1, P2, matchingPoints1, matchingPoints2, points4d);
+    triangulatePoints(P1, P2, correctMatchingPoints1, correctMatchingPoints2, points4d);
 
     vector<Point3f> points3d = convertFromHomogenous(points4d);
 
@@ -403,7 +403,7 @@ int main(int argc, char** argv)
     vector<float> plane = ransac(points3d, k, 1, 80);
 
 
-    FileStorage store("Results", FileStorage::WRITE);
+    FileStorage store("Results.txt", FileStorage::WRITE);
     store << "Plane" << plane;
     store << "Points" << points3d;
 
