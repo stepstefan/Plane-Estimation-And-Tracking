@@ -9,7 +9,6 @@ using namespace std;
 using namespace cv;
 
 const float calibrationSquareDimension = 1;
-const float arcuoSquareDimension = 1;
 const Size chessBoardDimension = Size(9, 6);
 
 void createKnownBoardPosition(Size boardSize, float squareEdgeLength, vector<Point3f>& corners)
