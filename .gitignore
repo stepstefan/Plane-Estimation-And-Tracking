@@ -19,5 +19,6 @@ CTestTestfile.cmake
 
 Merenje/Images/
 Merenje/Vektori/
+Merenje/Results/
 
 *.exe

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include "../Final/final.cpp"
 
 using namespace std;
 using namespace cv;
@@ -63,6 +64,7 @@ void getRelativeCameraLocation(Mat image, Mat& rvec, Mat& tvec)
 int main(int argc, char** argv)
 {
     Mat frame;
+    Mat drawToFrame;
 
     loadCameraCalibration(cameraMatrix, distortionCoeff);
 
@@ -73,7 +75,7 @@ int main(int argc, char** argv)
          return 0;
     }
 
-    int framesPerSecond = 20;
+    int framesPerSecond = 30;
 
 
     namedWindow("Webcam", CV_WINDOW_AUTOSIZE);
@@ -83,13 +85,30 @@ int main(int argc, char** argv)
     int imgs = 1;
     int pair = 1;
 
+
+    Mat rvec;
+    Mat tvec;
+
     while(true)
     {
          if(!vid.read(frame))
          {
              break;
          }
-         imshow("Webcam", frame);
+         vector<Vec2f> foundPoints;
+         bool found = false;
+
+         //found = findChessboardCorners(frame, chessBoardDimension, foundPoints, CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_NORMALIZE_IMAGE);
+         //frame.copyTo(drawToFrame);
+         //drawChessboardCorners(drawToFrame, chessBoardDimension, foundPoints, found);
+         if(found)
+         {
+             imshow("Webcam", drawToFrame);
+         }
+         else
+         {
+             imshow("Webcam", frame);
+         }
 
          char character = waitKey(100 / framesPerSecond);
          switch(character)
@@ -99,11 +118,9 @@ int main(int argc, char** argv)
                 imwrite("Images//img" + to_string(imgs) + "-" + to_string(pair) + ".jpg",img);
                 if(pair == 1)
                 {
-                    Mat rvec;
-                    Mat tvec;
                     getRelativeCameraLocation(img,rvec,tvec);
 
-                    FileStorage fs("Vektori/vektori" + to_string(imgs) + ".yml", FileStorage::WRITE);
+                    FileStorage fs("Vektori//vektori" + to_string(imgs) + ".yml", FileStorage::WRITE);
                     fs << "rvec" << rvec;
                     fs << "tvec" << tvec;
                     fs.release();
@@ -111,6 +128,26 @@ int main(int argc, char** argv)
                 pair++;
                 if(pair == 4)
                 {
+                    Mat loadimg1 = imread("Images//img" + to_string(imgs) + "-2.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+                    Mat loadimg2 = imread("Images//img" + to_string(imgs) + "-3.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+
+                    vector<Point2f> correctMatchingPoints1, correctMatchingPoints2;
+            		vector<KeyPoint> correctKeyPoints1, correctKeyPoints2;
+            		vector<DMatch> correctMatches;
+            		vector<Point3f> points3d;
+                    vector<float> plane = getPlane(loadimg1, loadimg2, cameraMatrix, distortionCoeff,correctMatchingPoints1,correctMatchingPoints2,correctKeyPoints1,correctKeyPoints2,correctMatches,points3d);
+
+                    Mat rmat;
+            		Rodrigues(rvec, rmat);
+                    FileStorage store("Results//result"+ to_string(imgs) +".txt", FileStorage::WRITE);
+                    store << "Rotation before Transpose" << rmat;
+                    store << "Translation" << tvec;
+                    vector<float> newPlane = transformPlane(rmat,tvec,plane);
+
+                    store << "Plane" << plane;
+                    store << "NewPlane" << newPlane;
+                    store.release();
+
                     pair = 1;
                     imgs++;
                 }
