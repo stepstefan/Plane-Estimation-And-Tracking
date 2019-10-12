@@ -1,12 +1,3 @@
-# Ignore all
-*
-
-# Unignore all with extensions
-!*.*
-
-# Unignore all dirs
-!*/
-
 CMakeCache.txt
 CMakeFiles
 CMakeScripts
@@ -20,5 +11,19 @@ CTestTestfile.cmake
 Merenje/Images/
 Merenje/Vektori/
 Merenje/Results/
-
+*.yml
+*.jpg
+*.png
+*.xml
+*.zip
 *.exe
+*.txt
+*.mp4
+Ufotkanje/Ufotkanje
+octave/octave-workspace
+*.ycm_extra_conf.py
+*.vscode
+Calibration/Calibration
+Merenje/Merenje
+Detekcija/Detekcija
+Merenje/Matlab/

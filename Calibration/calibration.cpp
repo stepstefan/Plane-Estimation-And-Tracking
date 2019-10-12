@@ -11,52 +11,50 @@ using namespace cv;
 const float calibrationSquareDimension = 1;
 const Size chessBoardDimension = Size(9, 6);
 
-void createKnownBoardPosition(Size boardSize, float squareEdgeLength, vector<Point3f>& corners)
+void createKnownBoardPosition(Size boardSize, float squareEdgeLength, vector<Point3f> &corners)
 {
-    for(int i = 0; i<boardSize.height; i++)
+    for (int i = 0; i < boardSize.height; i++)
     {
-        for(int j = 0 ; j<boardSize.width; j++)
+        for (int j = 0; j < boardSize.width; j++)
         {
             corners.push_back(Point3f(j * squareEdgeLength, i * squareEdgeLength, 0.0f));
         }
     }
 }
 
-void getChessBoardCorners(vector<Mat> images, vector<vector<Point2f> >& allFoundCorners, bool showResult = false)
+void getChessBoardCorners(vector<Mat> images, vector<vector<Point2f>> &allFoundCorners, bool showResult = false)
 {
-    for(vector<Mat>::iterator i = images.begin(); i != images.end(); i++)
+    for (vector<Mat>::iterator i = images.begin(); i != images.end(); i++)
     {
         vector<Point2f> pointBuf;
-        bool found = findChessboardCorners(*i, Size(9,6), pointBuf, CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_NORMALIZE_IMAGE);
+        bool found = findChessboardCorners(*i, Size(9, 6), pointBuf, CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_NORMALIZE_IMAGE);
 
-        if(found)
+        if (found)
         {
             allFoundCorners.push_back(pointBuf);
         }
 
-        if(showResult)
+        if (showResult)
         {
-            drawChessboardCorners(*i, Size(9,6), pointBuf, found);
+            drawChessboardCorners(*i, Size(9, 6), pointBuf, found);
             imshow("", *i);
             waitKey(0);
         }
     }
 }
-void cameraCalibration(vector<Mat> calibrationImages, Size boardSize, float squareEdgeLength, Mat& cameraMatrix, Mat& distortionCoeff, double& calibError)
+void cameraCalibration(vector<Mat> calibrationImages, Size boardSize, float squareEdgeLength, Mat &cameraMatrix, Mat &distortionCoeff, double &calibError)
 {
-    vector<vector<Point2f> > checkerboardImageSpacePoints;
+    vector<vector<Point2f>> checkerboardImageSpacePoints;
     getChessBoardCorners(calibrationImages, checkerboardImageSpacePoints, false);
 
-    vector<vector<Point3f> > worldSpaceCornerPoints(1);
-
+    vector<vector<Point3f>> worldSpaceCornerPoints(1);
 
     createKnownBoardPosition(boardSize, squareEdgeLength, worldSpaceCornerPoints[0]);
 
     worldSpaceCornerPoints.resize(checkerboardImageSpacePoints.size(), worldSpaceCornerPoints[0]);
 
     vector<Mat> rVectors, tVectors;
-    distortionCoeff = Mat::zeros(8,1, CV_64F);
-
+    distortionCoeff = Mat::zeros(8, 1, CV_64F);
 
     calibError = calibrateCamera(worldSpaceCornerPoints, checkerboardImageSpacePoints, boardSize, cameraMatrix, distortionCoeff, rVectors, tVectors);
     printf("%f", calibError);
@@ -64,25 +62,26 @@ void cameraCalibration(vector<Mat> calibrationImages, Size boardSize, float squa
 
 bool saveCameraCalibration(Mat cameraMatrix, Mat distortionCoeff, double calibError)
 {
+    cameraMatrix.convertTo(cameraMatrix, CV_32F);
+    distortionCoeff.convertTo(distortionCoeff, CV_32F);
     FileStorage fs("file.yml", FileStorage::WRITE);
     fs << "cameraMatrix" << cameraMatrix;
     fs << "distortionCoeff" << distortionCoeff;
     fs << "calibError" << calibError;
     fs.release();
 
-
     //_______________________________________________________________________________________________________________________________________________
     ofstream outStream("Rezultati.txt");
-    if(outStream)
+    if (outStream)
     {
         uint16_t rows = cameraMatrix.rows;
         uint16_t columns = cameraMatrix.cols;
 
-        for(int r = 0; r<rows; r++)
+        for (int r = 0; r < rows; r++)
         {
-            for(int c = 0; c < columns; c++)
+            for (int c = 0; c < columns; c++)
             {
-                double value = cameraMatrix.at<double>(r,c);
+                double value = cameraMatrix.at<double>(r, c);
                 outStream << value << endl;
             }
         }
@@ -90,11 +89,11 @@ bool saveCameraCalibration(Mat cameraMatrix, Mat distortionCoeff, double calibEr
         rows = distortionCoeff.rows;
         columns = distortionCoeff.cols;
 
-        for(int r = 0; r<rows; r++)
+        for (int r = 0; r < rows; r++)
         {
-            for(int c = 0; c < columns; c++)
+            for (int c = 0; c < columns; c++)
             {
-                double value = distortionCoeff.at<double>(r,c);
+                double value = distortionCoeff.at<double>(r, c);
                 outStream << value << endl;
             }
         }
@@ -104,18 +103,17 @@ bool saveCameraCalibration(Mat cameraMatrix, Mat distortionCoeff, double calibEr
     return false;
 }
 
-
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     Mat frame;
     Mat drawToFrame;
 
-    Mat cameraMatrix = Mat::eye(3,3, CV_64F);
+    Mat cameraMatrix = Mat::eye(3, 3, CV_64F);
 
     Mat distortionCoeff;
     double calibError;
     vector<Mat> savedImages;
-    vector<vector<Point2f> > markerCorners, rejectedCandidates;
+    vector<vector<Point2f>> markerCorners, rejectedCandidates;
 
     VideoCapture vid(1);
 
@@ -145,19 +143,18 @@ int main(int argc, char** argv)
     cameraCalibration(savedImages, chessBoardDimension, calibrationSquareDimension, cameraMatrix, distortionCoeff);
     saveCameraCalibration(cameraMatrix, distortionCoeff);*/
 
-   if(!vid.isOpened())
+    if (!vid.isOpened())
     {
         return 0;
     }
 
-    int framesPerSecond = 20;
-
+    int framesPerSecond = 60;
 
     namedWindow("Webcam", CV_WINDOW_AUTOSIZE);
 
-    while(true)
+    while (true)
     {
-        if(!vid.read(frame))
+        if (!vid.read(frame))
         {
             break;
         }
@@ -168,7 +165,7 @@ int main(int argc, char** argv)
         found = findChessboardCorners(frame, chessBoardDimension, foundPoints, CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_NORMALIZE_IMAGE);
         frame.copyTo(drawToFrame);
         drawChessboardCorners(drawToFrame, chessBoardDimension, foundPoints, found);
-        if(found)
+        if (found)
         {
             imshow("Webcam", drawToFrame);
         }
@@ -177,33 +174,31 @@ int main(int argc, char** argv)
             imshow("Webcam", frame);
         }
         char character = waitKey(100 / framesPerSecond);
-        switch(character)
+        switch (character)
         {
-            case ' ':
-                //saving
-                if(found)
-                {
-                    Mat temp;
-                    frame.copyTo(temp);
-                    savedImages.push_back(temp);
-                }
+        case ' ':
+            //saving
+            if (found)
+            {
+                Mat temp;
+                frame.copyTo(temp);
+                savedImages.push_back(temp);
+            }
 
-                break;
-            case 'f':
-                //calibration
-                if(savedImages.size()>1)
-                {
-                    cameraCalibration(savedImages, chessBoardDimension, calibrationSquareDimension, cameraMatrix, distortionCoeff, calibError);
-                    saveCameraCalibration(cameraMatrix, distortionCoeff, calibError);
-                    printf("File created");
-                }
-                break;
-            case 27:
-                //exit
-                return 0;
-                break;
+            break;
+        case 'f':
+            //calibration
+            if (savedImages.size() > 1)
+            {
+                cameraCalibration(savedImages, chessBoardDimension, calibrationSquareDimension, cameraMatrix, distortionCoeff, calibError);
+                saveCameraCalibration(cameraMatrix, distortionCoeff, calibError);
+                printf("File created");
+            }
+            break;
+        case 27:
+            //exit
+            return 0;
+            break;
         }
-
-
     }
 }
